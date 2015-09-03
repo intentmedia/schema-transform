@@ -6,14 +6,15 @@
 ; - Primitives
 ; - Records
 ; - Enums
-; - Arrays
+; - Arrays of primitives
+; - Maps of primitives
 ; - Unions
 ; - Null
 ;
 ; Not supported from Avro spec:
-; - Maps
 ; - Fixed
 ; - Bytes
+; - Collections of records
 
 (declare avro->prismatic-pair)
 
@@ -60,7 +61,14 @@
   (emit-pair avro (apply s/enum (get avro "symbols"))))
 
 (defn avro-null-transformer [avro]
+  "Avro supports null types. Prismatic does not really have this so we'll just return nil."
   nil)
+
+(defn avro-map-transformer [avro]
+  "Transform an avro map spec to Prismatic schema map description.
+  While Prismatic supports different key types, the Avro spec assumes string keys so we hardcode that."
+  (if-let [value-type (avro-primitive->prismatic-primitive (get avro "values"))]
+    (emit-pair avro {String value-type})))
 
 (def avro-type->transformer
   {"record"  avro-record-transformer
@@ -72,7 +80,8 @@
    "string"  avro-primitive-transformer
    "array"   avro-array-transformer
    "enum"    avro-enum-transformer
-   "null"    avro-null-transformer})
+   "null"    avro-null-transformer
+   "map"     avro-map-transformer})
 
 (defn avro->prismatic-pair [avro]
   (let [raw-type (get avro "type")

@@ -40,6 +40,12 @@
                                                     "type"  "array"
                                                     "items" "string"})))))
 
+(deftest test-avro-map-transformer
+  (testing "Converts a map"
+    (is (= [:map-name {String Double}] (avro-map-transformer {"name" "map-name"
+                                                              "type" "map"
+                                                              "values" "double"})))))
+
 (deftest test-avro-null-transformer
   (testing "Converts null to nothing"
     (is (= nil (avro-null-transformer {"name" "empty" "type" "null"})))))
