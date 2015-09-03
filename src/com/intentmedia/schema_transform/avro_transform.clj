@@ -8,9 +8,11 @@
 ; - Enums
 ; - Arrays
 ;
-; Not supported:
+; Not supported from Avro spec:
 ; - Maps
 ; - Fixed
+; - Null fields
+; - Bytes
 (declare avro->prismatic-pair)
 
 (def avro-primitive->prismatic-primitive
@@ -25,9 +27,15 @@
   (let [key (keyword (get avro "name"))]
     [key value]))
 
+(defn is-union? [avro]
+  (some #(= "null" %) avro))
+
+(defn avro-union->type-str [union]
+  (first (remove #(= "null" %) union)))
+
 (defn- avro-nullable->prismatic-nullable [type-field]
-  (let [primitive (first (remove #(= "null" %) type-field))]
-    (if (some #(= "null" %) type-field)
+  (let [primitive (avro-union->type-str type-field)]
+    (if (is-union? type-field)
       (s/maybe (avro-primitive->prismatic-primitive primitive)))))
 
 (defn avro-record-transformer [avro]
@@ -39,9 +47,9 @@
 
 (defn avro-primitive-transformer [avro]
   (let [type-field (get avro "type")]
-    (if (avro-primitive->prismatic-primitive type-field)
-      (emit-pair avro (avro-primitive->prismatic-primitive type-field))
-      (emit-pair avro (avro-nullable->prismatic-nullable type-field)))))
+    (if (is-union? type-field)
+      (emit-pair avro (avro-nullable->prismatic-nullable type-field))
+      (emit-pair avro (avro-primitive->prismatic-primitive type-field)))))
 
 (defn avro-array-transformer [avro]
   (emit-pair avro [(avro-primitive->prismatic-primitive (get avro "items"))]))
@@ -62,9 +70,9 @@
 
 (defn avro->prismatic-pair [avro]
   (let [raw-type (get avro "type")
-        type (if (contains? avro-type->transformer raw-type)
-               raw-type
-               (first (remove #(= "null" %) raw-type)))
+        type (cond
+               (contains? avro-type->transformer raw-type) raw-type
+               (is-union? raw-type) (avro-union->type-str raw-type))
         transformer (get avro-type->transformer type)]
     (transformer avro)))
 
