@@ -40,6 +40,10 @@
                                                     "type"  "array"
                                                     "items" "string"})))))
 
+(deftest test-avro-null-transformer
+  (testing "Converts null to nothing"
+    (is (= nil (avro-null-transformer {"name" "empty" "type" "null"})))))
+
 (deftest test-avro->prismatic
   (testing "It correctly parses an avro schema into a Prismatic schema"
     (is (= prismatic-nullable (avro-string->prismatic avro-nullable)))))

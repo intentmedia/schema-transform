@@ -7,12 +7,14 @@
 ; - Records
 ; - Enums
 ; - Arrays
+; - Unions
+; - Null
 ;
 ; Not supported from Avro spec:
 ; - Maps
 ; - Fixed
-; - Null fields
 ; - Bytes
+
 (declare avro->prismatic-pair)
 
 (def avro-primitive->prismatic-primitive
@@ -57,6 +59,9 @@
 (defn avro-enum-transformer [avro]
   (emit-pair avro (apply s/enum (get avro "symbols"))))
 
+(defn avro-null-transformer [avro]
+  nil)
+
 (def avro-type->transformer
   {"record"  avro-record-transformer
    "boolean" avro-primitive-transformer
@@ -66,7 +71,8 @@
    "double"  avro-primitive-transformer
    "string"  avro-primitive-transformer
    "array"   avro-array-transformer
-   "enum"    avro-enum-transformer})
+   "enum"    avro-enum-transformer
+   "null"    avro-null-transformer})
 
 (defn avro->prismatic-pair [avro]
   (let [raw-type (get avro "type")
