@@ -10,3 +10,7 @@ pom.xml.asc
 .lein-plugins/
 .lein-failures
 .nrepl-port
+.idea/workspace.xml
+.idea/vcs.xml
+.idea/copyright/profiles_settings.xml
+.idea/compiler.xml
