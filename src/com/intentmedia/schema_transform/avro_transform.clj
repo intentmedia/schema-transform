@@ -64,7 +64,7 @@
 
 (defn avro-null-transformer [avro]
   "Avro supports null types. Prismatic does not really have this so we'll just return nil."
-  nil)
+  (emit-pair avro nil))
 
 (defn avro-map-transformer [avro]
   "Transform an avro map spec to Prismatic schema map description.

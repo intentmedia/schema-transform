@@ -38,3 +38,15 @@
             :symbols ["CLUBS" "DIAMONDS" "HEARTS" "SPADES"]}
           (prismatic-enum-transformer [:suits (s/enum "SPADES" "CLUBS" "DIAMONDS" "HEARTS")])))))
 
+(deftest test-prismatic-record-transformer
+  (testing "Converts a record"))
+
+(deftest test-prismatic-array-transformer
+  (testing "Converts an array"))
+
+(deftest test-prismatic-map-transformer
+  (testing "Converts a map"))
+
+(deftest test-prismatic-null-transformer
+  (testing "Converts a null"
+    (is (= {:name "empty" :type "null"} (prismatic-null-transformer [:empty nil])))))

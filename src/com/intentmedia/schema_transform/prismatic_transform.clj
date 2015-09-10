@@ -39,7 +39,8 @@
   {})
 
 (defn prismatic-null-transformer [prismatic-schema]
-  {})
+  (let [k (name (first prismatic-schema))]
+    {:name k :type "null"}))
 
 (defn prismatic-primitive-transformer [prismatic-schema]
   (let [k (name (first prismatic-schema))
