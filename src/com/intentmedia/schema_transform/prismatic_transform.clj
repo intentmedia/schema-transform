@@ -20,12 +20,7 @@
 (defn get-name [prismatic-schema]
   (name (first prismatic-schema)))
 
-(defn- prismatic-pair->avro-map [[k v]]
-  (let [value (if (contains? prismatic-primitive->avro-primitive v)
-                (prismatic-primitive->avro-primitive v)
-                (make-union v))]
-    {:name k :type value}))
-
+(declare prismatic-pair->avro)
 
 (defn prismatic-enum-transformer [prismatic-schema]
   (let [v (last prismatic-schema)
@@ -55,8 +50,23 @@
     {:name (get-name prismatic-schema) :type value}))
 
 (defn prismatic-record-transformer [prismatic-schema]
-  {})
+  (let [name (get-name prismatic-schema)
+        fields (map prismatic-pair->avro (last prismatic-schema))]
+    {:name name
+     :type "record"
+     :fields fields}))
 
+(defn prismatic-pair->avro [prismatic-schema]
+  ;;TODO FIX
+  (prismatic-primitive-transformer prismatic-schema))
+
+
+; LEGACY
+(defn- prismatic-pair->avro-map [[k v]]
+  (let [value (if (contains? prismatic-primitive->avro-primitive v)
+                (prismatic-primitive->avro-primitive v)
+                (make-union v))]
+    {:name k :type value}))
 
 (defn prismatic->avro [prismatic-schema namespace name]
   (generate-string {:namespace namespace

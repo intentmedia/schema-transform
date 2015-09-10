@@ -39,7 +39,13 @@
           (prismatic-enum-transformer [:suits (s/enum "SPADES" "CLUBS" "DIAMONDS" "HEARTS")])))))
 
 (deftest test-prismatic-record-transformer
-  (testing "Converts a record"))
+  (testing "Converts a record"
+    (is (= {:name   "rec"
+            :type   "record"
+            :fields [{:name "name" :type "string"}
+                     {:name "favorite_number" :type ["null" "int"]}]}
+          (prismatic-record-transformer [:rec {:name            String
+                                               :favorite_number (s/maybe Integer)}])))))
 
 (deftest test-prismatic-array-transformer
   (testing "Converts an array"
