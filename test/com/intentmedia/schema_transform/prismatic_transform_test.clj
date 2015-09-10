@@ -43,13 +43,17 @@
 
 (deftest test-prismatic-array-transformer
   (testing "Converts an array"
-    (is (= {:name "arr"
-            :type "array"
+    (is (= {:name  "arr"
+            :type  "array"
             :items "string"}
           (prismatic-array-transformer [:arr [String]])))))
 
 (deftest test-prismatic-map-transformer
-  (testing "Converts a map"))
+  (testing "Converts a map"
+    (is (= {:name   "map-name"
+            :type   "map"
+            :values "double"}
+          (prismatic-map-transformer [:map-name {Integer Double}])))))
 
 (deftest test-prismatic-null-transformer
   (testing "Converts a null"

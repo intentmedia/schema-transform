@@ -35,12 +35,14 @@
      :symbols symbols}))
 
 (defn prismatic-array-transformer [prismatic-schema]
-  {:name (get-name prismatic-schema)
-   :type "array"
+  {:name  (get-name prismatic-schema)
+   :type  "array"
    :items (prismatic-primitive->avro-primitive (first (last prismatic-schema)))})
 
 (defn prismatic-map-transformer [prismatic-schema]
-  {})
+  {:name   (get-name prismatic-schema)
+   :type   "map"
+   :values (prismatic-primitive->avro-primitive (last (first (last prismatic-schema))))})
 
 (defn prismatic-null-transformer [prismatic-schema]
   {:name (get-name prismatic-schema) :type "null"})
