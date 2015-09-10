@@ -33,8 +33,8 @@
 
 (deftest test-prismatic-enum-transformer
   (testing "Converts an enum"
-    (is (= {"name" "suits"
-            "type" "enum"
-            "symbols" ["SPADES" "HEARTS" "DIAMONDS" "CLUBS"]}
-          (prismatic-enum-transformer [:suits (s/enum "SPADES" "HEARTS" "DIAMONDS" "CLUBS")])))))
+    (is (= {:name    "suits"
+            :type    "enum"
+            :symbols ["CLUBS" "DIAMONDS" "HEARTS" "SPADES"]}
+          (prismatic-enum-transformer [:suits (s/enum "SPADES" "CLUBS" "DIAMONDS" "HEARTS")])))))
 

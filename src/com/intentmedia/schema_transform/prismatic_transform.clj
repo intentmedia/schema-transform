@@ -25,7 +25,12 @@
 
 
 (defn prismatic-enum-transformer [prismatic-schema]
-  {})
+  (let [k (name (first prismatic-schema))
+        v (last prismatic-schema)
+        symbols (vec (sort (rest (s/explain v)))) ]
+    {:name k
+     :type "enum"
+     :symbols symbols}))
 
 (defn prismatic-array-transformer [prismatic-schema]
   {})
