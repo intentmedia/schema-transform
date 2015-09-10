@@ -10,10 +10,10 @@
 ; - Maps of primitives
 ; - Unions
 ; - Null
+; - Fixed (as strings)
+; - Bytes (as strings)
 ;
 ; Not supported from Avro spec:
-; - Fixed
-; - Bytes
 ; - Collections of records
 
 (declare avro->prismatic-pair)
@@ -24,7 +24,9 @@
    "long"    Long
    "float"   Float
    "double"  Double
-   "string"  String})
+   "string"  String
+   "bytes"   String
+   "fixed"   String})
 
 (defn emit-pair [avro value]
   (let [key (keyword (get avro "name"))]
@@ -78,6 +80,8 @@
    "float"   avro-primitive-transformer
    "double"  avro-primitive-transformer
    "string"  avro-primitive-transformer
+   "bytes"   avro-primitive-transformer
+   "fixed"   avro-primitive-transformer
    "array"   avro-array-transformer
    "enum"    avro-enum-transformer
    "null"    avro-null-transformer

@@ -4,21 +4,53 @@
 
 (def prismatic-primitive->avro-primitive
   {Boolean "boolean"
+   Double  "double"
+   Float   "float"
    Integer "int"
    Long    "long"
-   Float   "float"
-   Double  "double"
+   Number  "double"
    String  "string"})
 
+(def prismatic-string-prefixes
+  {"\\u" "bytes"})
+
+(defn make-union [prismatic-type]
+  ["null" (prismatic-primitive->avro-primitive (:schema prismatic-type))])
+
 (defn- prismatic-pair->avro-map [[k v]]
-  (let [parse-maybe #(prismatic-primitive->avro-primitive (:schema %))
+  (let [value (if (contains? prismatic-primitive->avro-primitive v)
+                (prismatic-primitive->avro-primitive v)
+                (make-union v))]
+    {:name k :type value}))
+
+
+(defn prismatic-enum-transformer [prismatic-schema]
+  {})
+
+(defn prismatic-array-transformer [prismatic-schema]
+  {})
+
+(defn prismatic-map-transformer [prismatic-schema]
+  {})
+
+(defn prismatic-null-transformer [prismatic-schema]
+  {})
+
+(defn prismatic-primitive-transformer [prismatic-schema]
+  (let [k (name (first prismatic-schema))
+        v (last prismatic-schema)
         value (if (contains? prismatic-primitive->avro-primitive v)
                 (prismatic-primitive->avro-primitive v)
-                [(parse-maybe v) "null"])]
+                (make-union v))]
     {:name k :type value}))
+
+(defn prismatic-record-transformer [prismatic-schema]
+  {})
+
 
 (defn prismatic->avro [prismatic-schema namespace name]
   (generate-string {:namespace namespace
                     :type      "record"
                     :name      name
                     :fields    (vec (map prismatic-pair->avro-map prismatic-schema))}))
+

@@ -12,8 +12,14 @@
 
 (deftest test-avro-primitive-transformer
   (testing "Converts a single field"
-    (is (= [:name String] (avro-primitive-transformer {"name" "name" "type" "string"}))))
-  (testing "Converts a nullable field"
+    (is (= [:name String] (avro-primitive-transformer {"name" "name" "type" "string"})))
+    (is (= [:name Integer] (avro-primitive-transformer {"name" "name" "type" "int"})))
+    (is (= [:name Double] (avro-primitive-transformer {"name" "name" "type" "double"})))
+    (is (= [:name Long] (avro-primitive-transformer {"name" "name" "type" "long"})))
+    (is (= [:name Boolean] (avro-primitive-transformer {"name" "name" "type" "boolean"})))
+    (is (= [:name String] (avro-primitive-transformer {"name" "name" "type" "fixed"})))
+    (is (= [:name String] (avro-primitive-transformer {"name" "name" "type" "bytes"}))))
+  (testing "Converts a union (nullable) field in either order"
     (is (= [:name (s/maybe Integer)] (avro-primitive-transformer {"name" "name" "type" ["int" "null"]})))
     (is (= [:name (s/maybe Integer)] (avro-primitive-transformer {"name" "name" "type" ["null" "int"]})))))
 
