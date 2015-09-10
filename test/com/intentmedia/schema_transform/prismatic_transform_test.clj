@@ -3,7 +3,7 @@
     [clojure.test :refer :all]
     [schema.core :as s]))
 
-(def avro-nullable "{\"namespace\":\"example.avro\",\"type\":\"record\",\"name\":\"User\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"favorite_number\",\"type\":[\"null\",\"int\"]},{\"name\":\"favorite_color\",\"type\":[\"null\",\"string\"]}]}")
+(def avro-nullable "{\"name\":\"User\",\"type\":\"record\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"favorite_number\",\"type\":[\"null\",\"int\"]},{\"name\":\"favorite_color\",\"type\":[\"null\",\"string\"]}],\"namespace\":\"example.avro\"}")
 
 (def prismatic-nullable
   {:name            String
