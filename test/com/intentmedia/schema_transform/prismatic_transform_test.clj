@@ -42,7 +42,11 @@
   (testing "Converts a record"))
 
 (deftest test-prismatic-array-transformer
-  (testing "Converts an array"))
+  (testing "Converts an array"
+    (is (= {:name "arr"
+            :type "array"
+            :items "string"}
+          (prismatic-array-transformer [:arr [String]])))))
 
 (deftest test-prismatic-map-transformer
   (testing "Converts a map"))

@@ -17,6 +17,9 @@
 (defn make-union [prismatic-type]
   ["null" (prismatic-primitive->avro-primitive (:schema prismatic-type))])
 
+(defn get-name [prismatic-schema]
+  (name (first prismatic-schema)))
+
 (defn- prismatic-pair->avro-map [[k v]]
   (let [value (if (contains? prismatic-primitive->avro-primitive v)
                 (prismatic-primitive->avro-primitive v)
@@ -25,30 +28,29 @@
 
 
 (defn prismatic-enum-transformer [prismatic-schema]
-  (let [k (name (first prismatic-schema))
-        v (last prismatic-schema)
-        symbols (vec (sort (rest (s/explain v)))) ]
-    {:name k
-     :type "enum"
+  (let [v (last prismatic-schema)
+        symbols (vec (sort (rest (s/explain v))))]
+    {:name    (get-name prismatic-schema)
+     :type    "enum"
      :symbols symbols}))
 
 (defn prismatic-array-transformer [prismatic-schema]
-  {})
+  {:name (get-name prismatic-schema)
+   :type "array"
+   :items (prismatic-primitive->avro-primitive (first (last prismatic-schema)))})
 
 (defn prismatic-map-transformer [prismatic-schema]
   {})
 
 (defn prismatic-null-transformer [prismatic-schema]
-  (let [k (name (first prismatic-schema))]
-    {:name k :type "null"}))
+  {:name (get-name prismatic-schema) :type "null"})
 
 (defn prismatic-primitive-transformer [prismatic-schema]
-  (let [k (name (first prismatic-schema))
-        v (last prismatic-schema)
+  (let [v (last prismatic-schema)
         value (if (contains? prismatic-primitive->avro-primitive v)
                 (prismatic-primitive->avro-primitive v)
                 (make-union v))]
-    {:name k :type value}))
+    {:name (get-name prismatic-schema) :type value}))
 
 (defn prismatic-record-transformer [prismatic-schema]
   {})
