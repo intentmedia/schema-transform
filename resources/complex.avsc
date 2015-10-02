@@ -1,0 +1,100 @@
+{
+  "namespace": "com.intentmedia.schema-transform.complex-test",
+  "type": "record",
+  "doc": "Top level documentation",
+  "name": "Order",
+  "fields": [
+    {
+      "name": "order_id",
+      "type": "int"
+    },
+    {
+      "name": "customer_id",
+      "type": "int"
+    },
+    {
+      "name": "total",
+      "type": "float"
+    },
+    {
+      "name": "order_details",
+      "type": {
+        "type": "array",
+        "items": {
+          "namespace": "com.intentmedia.schema-transform.complex-test",
+          "name": "OrderDetail",
+          "type": "record",
+          "fields": [
+            {
+              "name": "quantity",
+              "type": "int"
+            },
+            {
+              "name": "total",
+              "type": "float"
+            },
+            {
+              "name": "product_detail",
+              "type": {
+                "namespace": "com.intentmedia.schema-transform.complex-test",
+                "type": "record",
+                "name": "Product",
+                "fields": [
+                  {
+                    "name": "product_id",
+                    "type": "long"
+                  },
+                  {
+                    "name": "product_name",
+                    "type": "string",
+                    "doc": "This is the name of the product"
+                  },
+                  {
+                    "name": "product_description",
+                    "type": [
+                      "null",
+                      "string"
+                    ],
+                    "default": ""
+                  },
+                  {
+                    "name": "product_status",
+                    "type": {
+                      "name": "product_status",
+                      "type": "enum",
+                      "symbols": [
+                        "AVAILABLE",
+                        "OUT_OF_STOCK"
+                      ]
+                    },
+                    "default": "AVAILABLE"
+                  },
+                  {
+                    "name": "product_tags",
+                    "type": {
+                      "type": "array",
+                      "items": "string"
+                    },
+                    "doc": "This contains array of tags"
+                  },
+                  {
+                    "name": "price",
+                    "type": "float"
+                  },
+                  {
+                    "name": "product_hash",
+                    "type": {
+                      "type": "fixed",
+                      "name": "product_hash",
+                      "size": 5
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
