@@ -1,7 +1,7 @@
 (ns com.intentmedia.schema-transform.avro-transform-test
   (:require [com.intentmedia.schema-transform.avro-transform :refer :all]
-    [clojure.test :refer :all]
-    [schema.core :as s]))
+            [clojure.test :refer :all]
+            [schema.core :as s]))
 
 (def avro-nullable "{\"namespace\":\"example.avro\",\"type\":\"record\",\"name\":\"User\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"favorite_number\",\"type\":[\"int\",\"null\"]},{\"name\":\"favorite_color\",\"type\":[\"string\",\"null\"]}]}")
 
@@ -26,19 +26,19 @@
 (deftest test-avro-enum-transformer
   (testing "Converts an enum"
     (is (= [:suits (s/enum "SPADES" "HEARTS" "DIAMONDS" "CLUBS")]
-          (avro-enum-transformer {"name"    "suits"
-                                  "type"    "enum"
-                                  "symbols" ["SPADES" "HEARTS" "DIAMONDS" "CLUBS"]})))))
+           (avro-enum-transformer {"name"    "suits"
+                                   "type"    "enum"
+                                   "symbols" ["SPADES" "HEARTS" "DIAMONDS" "CLUBS"]})))))
 
 (deftest test-avro-record-transformer
   (testing "Converts a record"
     (is (= [:rec {:name            String
                   :favorite_number (s/maybe Integer)}]
-          (avro-record-transformer {"name"      "rec"
-                                    "namespace" "example.avro"
-                                    "type"      "record"
-                                    "fields"    [{"name" "name" "type" "string"}
-                                                 {"name" "favorite_number" "type" ["null" "int"]}]})))))
+           (avro-record-transformer {"name"      "rec"
+                                     "namespace" "example.avro"
+                                     "type"      "record"
+                                     "fields"    [{"name" "name" "type" "string"}
+                                                  {"name" "favorite_number" "type" ["null" "int"]}]})))))
 
 (deftest test-avro-array-transformer
   (testing "Converts an array"
@@ -48,8 +48,8 @@
 
 (deftest test-avro-map-transformer
   (testing "Converts a map"
-    (is (= [:map-name {String Double}] (avro-map-transformer {"name" "map-name"
-                                                              "type" "map"
+    (is (= [:map-name {String Double}] (avro-map-transformer {"name"   "map-name"
+                                                              "type"   "map"
                                                               "values" "double"})))))
 
 (deftest test-avro-null-transformer

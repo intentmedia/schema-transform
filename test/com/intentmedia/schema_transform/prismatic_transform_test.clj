@@ -1,66 +1,61 @@
 (ns com.intentmedia.schema-transform.prismatic-transform-test
   (:require [com.intentmedia.schema-transform.prismatic-transform :refer :all]
-    [clojure.test :refer :all]
-    [schema.core :as s]))
+            [clojure.test :refer :all]
+            [schema.core :as s]))
 
-(def avro-nullable "{\"name\":\"User\",\"type\":\"record\",\"fields\":[{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"favorite_number\",\"type\":[\"null\",\"int\"]},{\"name\":\"favorite_color\",\"type\":[\"null\",\"string\"]}],\"namespace\":\"example.avro\"}")
+(def avro-nullable "{\n  \"type\" : \"record\",\n  \"name\" : \"User\",\n  \"fields\" : [ {\n    \"type\" : \"string\",\n    \"name\" : \"name\"\n  }, {\n    \"type\" : [ \"null\", \"int\" ],\n    \"name\" : \"favorite_number\"\n  }, {\n    \"type\" : [ \"null\", \"string\" ],\n    \"name\" : \"favorite_color\"\n  }, {\n    \"type\" : \"map\",\n    \"values\" : \"long\",\n    \"name\" : \"map\"\n  }, {\n    \"type\" : [ \"null\", {\n      \"type\" : \"record\",\n      \"name\" : \"NestedRecord\",\n      \"fields\" : [ {\n        \"type\" : \"boolean\",\n        \"name\" : \"nested_field\"\n      } ]\n    } ],\n    \"name\" : \"nested\"\n  } ],\n  \"namespace\" : \"example.avro\"\n}")
 
-(def prismatic-nullable
-  {:name            String
-   :favorite_number (s/maybe Integer)
-   :favorite_color  (s/maybe String)})
+(s/defschema User
+  {:name                    String
+   :favorite_number         (s/maybe Integer)
+   :favorite_color          (s/maybe String)
+   :map                     {String Long}
+   (s/optional-key :nested) (s/schema-with-name {:nested_field Boolean}
+                                                "NestedRecord")})
 
 (deftest test-prismatic->avro
   (testing "It correctly parses a prismatic schema into an avro schema"
-    (is (= avro-nullable (prismatic->avro prismatic-nullable "example.avro" "User")))))
-
+    (is (= avro-nullable (println (prismatic->avro User :namespace "example.avro"))))))
 
 (deftest test-prismatic-primitive-transformer
   (testing "Converts a single field"
-    (is (= {:name "field" :type "string"} (prismatic-primitive-transformer [:field String])))
-    (is (= {:name "field" :type "int"} (prismatic-primitive-transformer [:field Integer])))
-    (is (= {:name "field" :type "double"} (prismatic-primitive-transformer [:field Double])))
-    (is (= {:name "field" :type "long"} (prismatic-primitive-transformer [:field Long])))
-    (is (= {:name "field" :type "boolean"} (prismatic-primitive-transformer [:field Boolean])))
-    (is (= {:name "field" :type "float"} (prismatic-primitive-transformer [:field Float]))))
-  (testing "Converts a nullable field"
-    (is (= {:name "field" :type ["null" "string"]} (prismatic-primitive-transformer [:field (s/maybe String)])))
-    (is (= {:name "field" :type ["null" "int"]} (prismatic-primitive-transformer [:field (s/maybe Integer)])))
-    (is (= {:name "field" :type ["null" "double"]} (prismatic-primitive-transformer [:field (s/maybe Double)])))
-    (is (= {:name "field" :type ["null" "long"]} (prismatic-primitive-transformer [:field (s/maybe Long)])))
-    (is (= {:name "field" :type ["null" "boolean"]} (prismatic-primitive-transformer [:field (s/maybe Boolean)])))
-    (is (= {:name "field" :type ["null" "float"]} (prismatic-primitive-transformer [:field (s/maybe Float)])))))
+    (is (= {:type "string"} (prismatic-primitive-transformer String)))
+    (is (= {:type "int"} (prismatic-primitive-transformer Integer)))
+    (is (= {:type "double"} (prismatic-primitive-transformer Double)))
+    (is (= {:type "long"} (prismatic-primitive-transformer Long)))
+    (is (= {:type "boolean"} (prismatic-primitive-transformer Boolean)))
+    (is (= {:type "float"} (prismatic-primitive-transformer Float)))))
 
-(deftest test-prismatic-enum-transformer
+(deftest test-prismatic-enum-transforTmer
   (testing "Converts an enum"
-    (is (= {:name    "suits"
-            :type    "enum"
+    (is (= {:type    "enum"
             :symbols ["CLUBS" "DIAMONDS" "HEARTS" "SPADES"]}
-          (prismatic-enum-transformer [:suits (s/enum "SPADES" "CLUBS" "DIAMONDS" "HEARTS")])))))
+           (prismatic-enum-transformer (s/enum "SPADES" "CLUBS" "DIAMONDS" "HEARTS"))))))
 
 (deftest test-prismatic-record-transformer
   (testing "Converts a record"
-    (is (= {:name   "rec"
-            :type   "record"
+    (is (= {:type   "record"
             :fields [{:name "name" :type "string"}
                      {:name "favorite_number" :type ["null" "int"]}]}
-          (prismatic-record-transformer [:rec {:name            String
-                                               :favorite_number (s/maybe Integer)}])))))
+           (select-keys
+             (prismatic-record-transformer
+              "Record"
+              {:name            String
+               :favorite_number (s/maybe Integer)})
+             [:type :fields])))))
 
 (deftest test-prismatic-array-transformer
   (testing "Converts an array"
-    (is (= {:name  "arr"
-            :type  "array"
+    (is (= {:type  "array"
             :items "string"}
-          (prismatic-array-transformer [:arr [String]])))))
+           (prismatic-array-transformer [String])))))
 
 (deftest test-prismatic-map-transformer
   (testing "Converts a map"
-    (is (= {:name   "map-name"
-            :type   "map"
+    (is (= {:type   "map"
             :values "double"}
-          (prismatic-map-transformer [:map-name {Integer Double}])))))
+           (prismatic-map-transformer {Integer Double})))))
 
 (deftest test-prismatic-null-transformer
   (testing "Converts a null"
-    (is (= {:name "empty" :type "null"} (prismatic-null-transformer [:empty nil])))))
+    (is (= {:type "null"} (prismatic-null-transformer nil)))))
