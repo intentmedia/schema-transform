@@ -15,7 +15,7 @@
 
 (deftest test-prismatic->avro
   (testing "It correctly parses a prismatic schema into an avro schema"
-    (is (= avro-nullable (println (prismatic->avro User :namespace "example.avro"))))))
+    (is (= avro-nullable (prismatic->avro User :namespace "example.avro")))))
 
 (deftest test-prismatic-primitive-transformer
   (testing "Converts a single field"
