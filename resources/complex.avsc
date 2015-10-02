@@ -82,11 +82,10 @@
                     "type": "float"
                   },
                   {
-                    "name": "product_hash",
+                    "name": "product_properties",
                     "type": {
-                      "type": "fixed",
-                      "name": "product_hash",
-                      "size": 5
+                      "type": "map",
+                      "values": "string"
                     }
                   }
                 ]

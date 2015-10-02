@@ -1,0 +1,20 @@
+{
+  "namespace": "com.intentmedia.schema-transform.complex-test",
+  "type": "record",
+  "doc": "Top level documentation",
+  "name": "Order",
+  "fields": [
+    {
+      "name": "order_id",
+      "type": "int"
+    },
+    {
+      "name": "customer_id",
+      "type": "int"
+    },
+    {
+      "name": "total",
+      "type": "float"
+    }
+  ]
+}
