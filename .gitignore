@@ -15,3 +15,4 @@ pom.xml.asc
 .idea/copyright/profiles_settings.xml
 .idea/compiler.xml
 .idea/misc.xml
+.idea/libraries
