@@ -2,7 +2,9 @@
   :description "Schema Transform is library for changing data specifications from one format to another to help build complex polyglot data systems."
   :url "https://github.com/intentmedia/schema-transform"
   :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+            :url  "http://www.eclipse.org/legal/epl-v10.html"}
+  :scm {:name "git"
+        :url  "https://github.com/intentmedia/schema-transform"}
   :dependencies [[cheshire "5.5.0"]
                  [prismatic/schema "1.0.0"]
                  [org.clojure/clojure "1.7.0"]
@@ -10,4 +12,5 @@
   :profiles {:uberjar {:aot :all}}
   :source-paths ["src"]
   :resource-paths ["resources"]
-  :test-paths ["test"])
+  :test-paths ["test"]
+  :deploy-branches ["master"])
