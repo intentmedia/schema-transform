@@ -43,21 +43,21 @@
     (avro-primitive->prismatic-primitive union-or-primitive)))
 
 (defn avro-record-transformer [avro-record]
-  (let [fields (get avro-record "fields")]
+  (let [fields (get avro-record :fields)]
     (reduce (fn [combiner [k v]]
               (assoc combiner k v))
       {}
       (map avro-pair->prismatic-pair fields))))
 
 (defn avro-array-transformer [avro-array-type]
-  (let [item-raw-type (get avro-array-type "items")]
+  (let [item-raw-type (get avro-array-type :items)]
     [(avro-primitive->prismatic-primitive item-raw-type)]))
 
 (defn avro-enum-transformer [avro-enum]
-  (apply s/enum (get avro-enum "symbols")))
+  (apply s/enum (get avro-enum :symbols)))
 
 (defn avro-map-transformer [avro-map-type]
-  (if-let [value-type (avro-primitive->prismatic-primitive (get avro-map-type "values"))]
+  (if-let [value-type (avro-primitive->prismatic-primitive (get avro-map-type :values))]
     {String value-type}))
 
 (defn avro-fixed-transformer [avro-fixed-type]
@@ -73,12 +73,12 @@
 (defn avro-type-transformer [avro-type]
   (if (or (contains? avro-primitive->prismatic-primitive avro-type) (is-union? avro-type))
     (avro-primitive-transformer avro-type)
-    ((get avro-type->transformer (get avro-type "type")) avro-type)))
+    ((get avro-type->transformer (get avro-type :type)) avro-type)))
 
 (defn avro-pair->prismatic-pair [avro-pair-map]
-  (let [name (get avro-pair-map "name")
-        value-type (get avro-pair-map "type")]
+  (let [name (get avro-pair-map :name)
+        value-type (get avro-pair-map :type)]
     [(keyword name) (avro-type-transformer value-type)]))
 
 (defn avro->prismatic [avro]
-  {})
+  (avro-type-transformer avro))
