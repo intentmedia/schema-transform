@@ -1,5 +1,5 @@
 (ns com.intentmedia.schema-transform.avro-transform
-  (:require [cheshire.core :refer [parse-string generate-string]]
+  (:require [cheshire.core :refer [parse-string]]
     [schema.core :as s]))
 
 ; Currently supports:
@@ -80,5 +80,8 @@
         value-type (get avro-pair-map :type)]
     [(keyword name) (avro-type-transformer value-type)]))
 
-(defn avro->prismatic [avro]
+(defn avro-parsed->prismatic [avro]
   (avro-type-transformer avro))
+
+(defn avro->prismatic [avro]
+  (avro-parsed->prismatic (parse-string avro true)))

@@ -46,18 +46,15 @@
                                                 {:name "favorite_number" :type ["null" "int"]}]})))))
 
 ;; Integration Tests
-(defn- get-schema [filename]
-  (let [schema (slurp (io/file (io/resource filename)))
-        ;_ (println (str "Testing: " schema))
-        ]
-    (parse-string schema true)))
+(defn- read-schema [filename]
+  (slurp (io/file (io/resource filename))))
 
 (deftest test-avro-transform
   (testing "Converts a simple record type"
     (is (= {:order_id Integer
             :customer_id Integer
             :total Float}
-          (avro->prismatic (get-schema "simple.avsc")))))
+          (avro->prismatic (read-schema "simple.avsc")))))
   (testing "Converts a complex record type"
     (is (= {:order_id Integer
             :customer_id Integer
@@ -70,4 +67,4 @@
                                               :product_tags [String]
                                               :price Float
                                               :product_properties {String String}}}]}
-          (avro->prismatic (get-schema "complex.avsc"))))))
+          (avro->prismatic (read-schema "complex.avsc"))))))
