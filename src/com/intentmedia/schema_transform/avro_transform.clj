@@ -14,6 +14,7 @@
 ; - Bytes (as strings)
 
 (declare avro-pair->prismatic-pair)
+(declare avro-type-transformer)
 
 (def avro-primitive->prismatic-primitive
   {"boolean" Boolean
@@ -42,8 +43,8 @@
     (avro-nullable->prismatic-nullable union-or-primitive)
     (avro-primitive->prismatic-primitive union-or-primitive)))
 
-(defn avro-record-transformer [avro-record]
-  (let [fields (get avro-record :fields)]
+(defn avro-record-transformer [avro-record-type]
+  (let [fields (get avro-record-type :fields)]
     (reduce (fn [combiner [k v]]
               (assoc combiner k v))
       {}
@@ -51,10 +52,10 @@
 
 (defn avro-array-transformer [avro-array-type]
   (let [item-raw-type (get avro-array-type :items)]
-    [(avro-primitive->prismatic-primitive item-raw-type)]))
+    [(avro-type-transformer item-raw-type)]))
 
-(defn avro-enum-transformer [avro-enum]
-  (apply s/enum (get avro-enum :symbols)))
+(defn avro-enum-transformer [avro-enum-type]
+  (apply s/enum (get avro-enum-type :symbols)))
 
 (defn avro-map-transformer [avro-map-type]
   (if-let [value-type (avro-primitive->prismatic-primitive (get avro-map-type :values))]

@@ -63,7 +63,8 @@
                              :total Float
                              :product_detail {:product_id Long
                                               :product_name String
-                                              :product_description String
+                                              :product_description (s/maybe String)
+                                              :product_status (s/enum "AVAILABLE" "OUT_OF_STOCK")
                                               :product_tags [String]
                                               :price Float
                                               :product_properties {String String}}}]}
