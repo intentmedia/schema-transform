@@ -53,5 +53,5 @@ Transform data schemas
 
 ## Contributers
 
-* Chet Mancini | (Github)[http://github.com/chetmancini], (Twitter)[http://twitter.com/chetmancini]
-* Sebastian Rojas Vivanco | (Github)[https://github.com/sebastiansen]
+* Chet Mancini | [Github](http://github.com/chetmancini), [Twitter](http://twitter.com/chetmancini)
+* Sebastian Rojas Vivanco | [Github](https://github.com/sebastiansen)
