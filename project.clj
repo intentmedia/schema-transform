@@ -5,4 +5,5 @@
                  [camel-snake-kebab "0.3.2"]]
   :profiles {:uberjar {:aot :all}}
   :source-paths ["src"]
+  :resource-paths ["resources"]
   :test-paths ["test"])

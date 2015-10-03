@@ -1,9 +1,10 @@
 (ns com.intentmedia.schema-transform.avro-transform-test
   (:require [com.intentmedia.schema-transform.avro-transform :refer :all]
     [clojure.test :refer :all]
-    [schema.core :as s]))
+    [schema.core :as s]
+    [clojure.java.io :as io]))
 
-
+;; Unit tests
 (deftest test-avro-primitive-transformer
   (testing "Converts a single field"
     (is (= String (avro-primitive-transformer "string")))
@@ -42,3 +43,15 @@
                                     "type"      "record"
                                     "fields"    [{"name" "name" "type" "string"}
                                                  {"name" "favorite_number" "type" ["null" "int"]}]})))))
+
+;; Integration Tests
+(defn- get-schema [filename]
+  (let [schema (slurp (io/file (io/resource filename)))
+        _ (println (str "Testing: " schema))]
+    schema))
+
+(deftest test-avro-transform
+  (testing "Converts a simple record type"
+    (is (= {} (avro->prismatic (get-schema "simple.avsc")))))
+  (testing "Converts a complex record type"
+    (is (= {} (avro->prismatic (get-schema "complex.avsc"))))))

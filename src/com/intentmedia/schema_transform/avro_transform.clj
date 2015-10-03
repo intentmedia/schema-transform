@@ -79,3 +79,6 @@
   (let [name (get avro-pair-map "name")
         value-type (get avro-pair-map "type")]
     [(keyword name) (avro-type-transformer value-type)]))
+
+(defn avro->prismatic [avro]
+  {})
