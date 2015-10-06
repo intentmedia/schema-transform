@@ -17,7 +17,7 @@ Transform data schemas
    :favorite_number (s/maybe Integer)
    :favorite_color  (s/maybe String)})
    
-(prismatic->avro example-schema :namespace "example.avro")
+(prismatic->avro User :namespace "example.avro")
 => "{
       \"name\": \"User\",
       \"type\": \"record\",
