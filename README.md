@@ -1,7 +1,9 @@
 # schema-transform
+Transform data schemas
+
 [![Build Status](https://travis-ci.org/intentmedia/schema-transform.svg)](https://travis-ci.org/intentmedia/schema-transform)
 
-Transform data schemas
+[![Clojars Project](http://clojars.org/com.intentmedia/schema-transform/latest-version.svg)](http://clojars.org/com.intentmedia/schema-transform)
 
 ## Usage
 
