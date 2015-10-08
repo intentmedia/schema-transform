@@ -2,7 +2,7 @@
   (:require [cheshire.core :refer [parse-string generate-string]]
             [schema.core :as s]
             [camel-snake-kebab.core :refer [->PascalCase]])
-  (:import [schema.core EnumSchema Maybe]))
+  (:import [schema.core EnumSchema Maybe Both]))
 
 (defrecord Optional [schema])
 
@@ -44,6 +44,9 @@
                  (->PascalCase (gensym (name field-name))))
      :fields fields}))
 
+(defn prismatic-both-transformer [field-name prismatic-schema]
+  (prismatic->avro* field-name (first (:schemas prismatic-schema))))
+
 (defn primitive? [value-type]
   (contains? prismatic-primitive->avro-primitive value-type))
 
@@ -58,19 +61,29 @@
        (= (count value-type) 1)
        (= (first (keys value-type)) String)))
 
+(defn both? [value-type]
+  (= (class value-type) Both))
+
 (defn prismatic-transform [value-type]
   ((cond
      (primitive? value-type) prismatic-primitive-transformer
      (enum? value-type) prismatic-enum-transformer
      (seq? value-type) prismatic-array-transformer
      (nil? value-type) prismatic-null-transformer
-     (map?* value-type) prismatic-map-transformer)
+     (map?* value-type) prismatic-map-transformer
+     :else (constantly nil))
     value-type))
 
 (defn prismatic-optional-transform [field-name value-type]
-  {:type ["null" (if (primitive? value-type)
-                   (prismatic-primitive->avro-primitive value-type)
-                   (prismatic->avro* field-name value-type))]
+  {:type ["null" (cond
+                   (record?* value-type) (prismatic->avro* field-name value-type)
+                   (primitive? value-type) (prismatic-primitive->avro-primitive value-type)
+                   :else (if-let [avro (prismatic-transform value-type)]
+                           avro
+                           (throw (RuntimeException. (str "Could not tranform field: "
+                                                          field-name
+                                                          " with value-type: "
+                                                          value-type)))))]
    :name (name field-name)})
 
 (defn prismatic->avro* [field-name value-type]
@@ -84,13 +97,16 @@
                      value-type)]
     (cond
       optional? (prismatic-optional-transform field-name value-type)
+      (both? value-type) (prismatic-both-transformer field-name value-type)
       (record?* value-type) (prismatic-record-transformer field-name value-type)
       :else (assoc (prismatic-transform value-type)
               :name (name field-name)))))
 
 (defn prismatic->avro
   [prismatic-schema & {:keys [name namespace]}]
-  (cond-> (prismatic->avro* (or name (->PascalCase (str (gensym))))
-                            prismatic-schema)
-          namespace (assoc :namespace namespace)
-          true (generate-string {:pretty true})))
+  (-> (prismatic->avro* (or name (->PascalCase (str (gensym))))
+                        prismatic-schema)
+      (assoc :namespace (or namespace (-> (meta prismatic-schema)
+                                          :ns
+                                          str)))
+      (generate-string {:pretty true})))

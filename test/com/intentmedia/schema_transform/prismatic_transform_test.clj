@@ -3,19 +3,20 @@
             [clojure.test :refer :all]
             [schema.core :as s]))
 
-(def avro-nullable "{\n  \"type\" : \"record\",\n  \"name\" : \"User\",\n  \"fields\" : [ {\n    \"type\" : \"string\",\n    \"name\" : \"name\"\n  }, {\n    \"type\" : [ \"null\", \"int\" ],\n    \"name\" : \"favorite_number\"\n  }, {\n    \"type\" : [ \"null\", \"string\" ],\n    \"name\" : \"favorite_color\"\n  }, {\n    \"type\" : \"map\",\n    \"values\" : \"long\",\n    \"name\" : \"map\"\n  }, {\n    \"type\" : [ \"null\", {\n      \"type\" : \"record\",\n      \"name\" : \"NestedRecord\",\n      \"fields\" : [ {\n        \"type\" : \"boolean\",\n        \"name\" : \"nested_field\"\n      } ]\n    } ],\n    \"name\" : \"nested\"\n  } ],\n  \"namespace\" : \"example.avro\"\n}")
+(def avro-nullable "{\n  \"type\" : \"record\",\n  \"name\" : \"User\",\n  \"fields\" : [ {\n    \"type\" : \"string\",\n    \"name\" : \"name\"\n  }, {\n    \"type\" : [ \"null\", \"int\" ],\n    \"name\" : \"favorite_number\"\n  }, {\n    \"type\" : [ \"null\", \"string\" ],\n    \"name\" : \"favorite_color\"\n  }, {\n    \"type\" : \"map\",\n    \"values\" : \"long\",\n    \"name\" : \"map\"\n  }, {\n    \"type\" : \"int\",\n    \"name\" : \"both\"\n  }, {\n    \"type\" : [ \"null\", {\n      \"type\" : \"record\",\n      \"name\" : \"NestedRecord\",\n      \"fields\" : [ {\n        \"type\" : \"boolean\",\n        \"name\" : \"nested_field\"\n      } ]\n    } ],\n    \"name\" : \"nested\"\n  } ],\n  \"namespace\" : \"com.intentmedia.schema-transform.prismatic-transform-test\"\n}")
 
 (s/defschema User
   {:name                    String
    :favorite_number         (s/maybe Integer)
    :favorite_color          (s/maybe String)
    :map                     {String Long}
+   :both                    (s/both Integer (s/pred pos?))
    (s/optional-key :nested) (s/schema-with-name {:nested_field Boolean}
                                                 "NestedRecord")})
 
 (deftest test-prismatic->avro
   (testing "It correctly parses a prismatic schema into an avro schema"
-    (is (= avro-nullable (prismatic->avro User :namespace "example.avro")))))
+    (is (= avro-nullable (prismatic->avro User)))))
 
 (deftest test-prismatic-primitive-transformer
   (testing "Converts a single field"
@@ -39,9 +40,9 @@
                      {:name "favorite_number" :type ["null" "int"]}]}
            (select-keys
              (prismatic-record-transformer
-              "Record"
-              {:name            String
-               :favorite_number (s/maybe Integer)})
+               "Record"
+               {:name            String
+                :favorite_number (s/maybe Integer)})
              [:type :fields])))))
 
 (deftest test-prismatic-array-transformer
