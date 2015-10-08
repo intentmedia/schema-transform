@@ -68,7 +68,7 @@
   ((cond
      (primitive? value-type) prismatic-primitive-transformer
      (enum? value-type) prismatic-enum-transformer
-     (seq? value-type) prismatic-array-transformer
+     (sequential? value-type) prismatic-array-transformer
      (nil? value-type) prismatic-null-transformer
      (map?* value-type) prismatic-map-transformer
      :else (constantly nil))
@@ -95,6 +95,7 @@
         value-type (if (= (type value-type) Maybe)
                      (:schema value-type)
                      value-type)]
+    (prn field-name value-type)
     (cond
       optional? (prismatic-optional-transform field-name value-type)
       (both? value-type) (prismatic-both-transformer field-name value-type)
@@ -104,7 +105,9 @@
 
 (defn prismatic->avro
   [prismatic-schema & {:keys [name namespace]}]
-  (-> (prismatic->avro* (or name (->PascalCase (str (gensym))))
+  (-> (prismatic->avro* (or name
+                            (s/schema-name prismatic-schema)
+                            (->PascalCase (str "Schema" (gensym))))
                         prismatic-schema)
       (assoc :namespace (or namespace (-> (meta prismatic-schema)
                                           :ns
