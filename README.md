@@ -10,14 +10,14 @@ Transform data schemas
 ###Schema -> Avro
 ```clj
 (require '[schema.core :as s]
-         '[com.intentmedia.schema-transform.prismatic-transform :refer [prismatic->avro]])
+         '[com.intentmedia.schema-transform.prismatic-transform :refer [to-avro]])
 
 (s/defschema User
   {:name            String
    :favorite_number (s/maybe Integer)
    :favorite_color  (s/maybe String)})
    
-(prismatic->avro User :namespace "example.avro")
+(to-avro User :namespace "example.avro")
 => "{
       \"name\": \"User\",
       \"type\": \"record\",
