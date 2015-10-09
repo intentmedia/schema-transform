@@ -6,7 +6,7 @@
 
 (defrecord Optional [schema])
 
-(def prismatic-primitive->avro-primitive
+(def primitives
   {Boolean "boolean"
    Double  "double"
    Float   "float"
@@ -15,101 +15,92 @@
    Number  "double"
    String  "string"})
 
-(declare prismatic->avro*)
+(declare avro-field avro-type nested-type)
 
-(defn prismatic-enum-transformer [prismatic-schema]
-  (let [symbols (vec (sort (rest (s/explain prismatic-schema))))]
-    {:type    "enum"
-     :symbols symbols}))
+(defn primitive-type [schema]
+  (primitives schema))
 
-(defn prismatic-array-transformer [prismatic-schema]
-  {:type  "array"
-   :items (prismatic-primitive->avro-primitive (first prismatic-schema))})
-
-(defn prismatic-map-transformer [prismatic-schema]
+(defn map-type [schema]
   {:type   "map"
-   :values (prismatic-primitive->avro-primitive (first (vals prismatic-schema)))})
+   :values (primitive-type (first (vals schema)))})
 
-(defn prismatic-null-transformer [_] {:type "null"})
+(def null-type "null")
 
-(defn prismatic-primitive-transformer [prismatic-schema]
-  {:type (prismatic-primitive->avro-primitive prismatic-schema)})
+(defn both-type [field-name schema]
+  (avro-type field-name (first (:schemas schema))))
 
-(defn prismatic-record-transformer [field-name prismatic-schema]
-  (let [fields (map prismatic->avro*
-                    (keys prismatic-schema)
-                    (vals prismatic-schema))]
+(defn record-type [field-name schema]
+  (let [fields (mapv avro-field (keys schema) (vals schema))]
     {:type   "record"
-     :name   (or (s/schema-name prismatic-schema)
-                 (->PascalCase (gensym (name field-name))))
+     :name   (or (s/schema-name schema)
+                 (->PascalCase (gensym field-name)))
      :fields fields}))
 
-(defn prismatic-both-transformer [field-name prismatic-schema]
-  (prismatic->avro* field-name (first (:schemas prismatic-schema))))
+(defn optional-type [field-name schema]
+  ["null" (avro-type field-name (:schema schema))])
 
-(defn primitive? [value-type]
-  (contains? prismatic-primitive->avro-primitive value-type))
+(defn enum-type [field-name schema]
+  {:type    "enum"
+   :symbols (vec (:vs schema))
+   :name    (->PascalCase (gensym field-name))})
 
-(defn enum? [value-type]
-  (= EnumSchema (class value-type)))
+(defn array-type [field-name schema]
+  {:type  "array"
+   :items (avro-type field-name (first schema))})
 
-(defn record?* [value-type]
-  (and (map? value-type) (keyword? (first (first value-type)))))
+(defn primitive? [schema]
+  (contains? primitives schema))
 
-(defn map?* [value-type]
-  (and (map? value-type)
-       (= (count value-type) 1)
-       (= (first (keys value-type)) String)))
+(defn enum? [schema]
+  (= EnumSchema (class schema)))
 
-(defn both? [value-type]
-  (= (class value-type) Both))
+(defn record?* [schema]
+  (and (map? schema) (keyword? (first (first schema)))))
 
-(defn prismatic-transform [value-type]
-  ((cond
-     (primitive? value-type) prismatic-primitive-transformer
-     (enum? value-type) prismatic-enum-transformer
-     (sequential? value-type) prismatic-array-transformer
-     (nil? value-type) prismatic-null-transformer
-     (map?* value-type) prismatic-map-transformer
-     :else (constantly nil))
-    value-type))
+(defn map?* [schema]
+  (and (map? schema)
+       (= (count schema) 1)
+       (= (first (keys schema)) String)))
 
-(defn prismatic-optional-transform [field-name value-type]
-  {:type ["null" (cond
-                   (record?* value-type) (prismatic->avro* field-name value-type)
-                   (primitive? value-type) (prismatic-primitive->avro-primitive value-type)
-                   :else (if-let [avro (prismatic-transform value-type)]
-                           avro
-                           (throw (RuntimeException. (str "Could not tranform field: "
-                                                          field-name
-                                                          " with value-type: "
-                                                          value-type)))))]
-   :name (name field-name)})
+(defn both? [schema]
+  (= (class schema) Both))
 
-(defn prismatic->avro* [field-name value-type]
-  (let [optional? (or (s/optional-key? field-name)
-                      (= (type value-type) Maybe))
-        field-name (if (s/optional-key? field-name)
-                     (:k field-name)
-                     field-name)
-        value-type (if (= (type value-type) Maybe)
-                     (:schema value-type)
-                     value-type)]
-    (prn field-name value-type)
-    (cond
-      optional? (prismatic-optional-transform field-name value-type)
-      (both? value-type) (prismatic-both-transformer field-name value-type)
-      (record?* value-type) (prismatic-record-transformer field-name value-type)
-      :else (assoc (prismatic-transform value-type)
-              :name (name field-name)))))
+(defn optional? [field-name schema]
+  (or (s/optional-key? field-name)
+      (= (type schema) Maybe)))
 
-(defn prismatic->avro
+(defn avro-type
+  [field-name schema]
+  (cond
+    (optional? field-name schema) (optional-type field-name schema)
+    (primitive? schema) (primitive-type schema)
+    (nil? schema) null-type
+    (sequential? schema) (array-type field-name schema)
+    (map?* schema) (map-type schema)
+    (both? schema) (both-type field-name schema)
+    (enum? schema) (enum-type field-name schema)
+    (record?* schema) (record-type field-name schema)
+    :else (throw (RuntimeException. (str "Could not tranform field "
+                                         field-name
+                                         " with schema "
+                                         schema)))))
+
+(defn avro-field
+  [field-name schema]
+  (let [field-name* (name (if (s/optional-key? field-name)
+                            (:k field-name)
+                            field-name))
+        type (avro-type field-name* schema)]
+    {:type type
+     :name field-name*}))
+
+(defn to-avro
   [prismatic-schema & {:keys [name namespace]}]
-  (-> (prismatic->avro* (or name
-                            (s/schema-name prismatic-schema)
-                            (->PascalCase (str "Schema" (gensym))))
-                        prismatic-schema)
+  (-> (avro-type "" prismatic-schema)
       (assoc :namespace (or namespace (-> (meta prismatic-schema)
                                           :ns
-                                          str)))
+                                          str))
+             :name (or name
+                       (s/schema-name prismatic-schema)
+                       (->PascalCase (str "Schema" (gensym)))))
       (generate-string {:pretty true})))
