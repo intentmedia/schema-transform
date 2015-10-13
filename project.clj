@@ -6,7 +6,7 @@
   :scm {:name "git"
         :url  "https://github.com/intentmedia/schema-transform"}
   :dependencies [[cheshire "5.5.0"]
-                 [prismatic/schema "1.0.0"]
+                 [prismatic/schema "1.0.1"]
                  [org.clojure/clojure "1.7.0"]
                  [camel-snake-kebab "0.3.2"]]
   :profiles {:uberjar {:aot :all}}

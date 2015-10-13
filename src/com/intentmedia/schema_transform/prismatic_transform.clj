@@ -32,17 +32,21 @@
 (defn record-type [field-name schema]
   (let [fields (mapv avro-field (keys schema) (vals schema))]
     {:type   "record"
-     :name   (or (s/schema-name schema)
-                 (->PascalCase (gensym field-name)))
+     :name   (->PascalCase
+               (or (s/schema-name schema)
+                   field-name))
      :fields fields}))
 
 (defn optional-type [field-name schema]
   ["null" (avro-type field-name (:schema schema))])
 
 (defn enum-type [field-name schema]
-  {:type    "enum"
-   :symbols (vec (:vs schema))
-   :name    (->PascalCase (gensym field-name))})
+  {:type      "enum"
+   :symbols   (vec (:vs schema))
+   :name      (->PascalCase
+                (or (s/schema-name schema)
+                    field-name))
+   :namespace (s/schema-ns schema)})
 
 (defn array-type [field-name schema]
   {:type  "array"
@@ -100,7 +104,8 @@
       (assoc :namespace (or namespace (-> (meta prismatic-schema)
                                           :ns
                                           str))
-             :name (or name
-                       (s/schema-name prismatic-schema)
-                       (->PascalCase (str "Schema" (gensym)))))
+             :name (->PascalCase
+                     (or name
+                         (s/schema-name prismatic-schema)
+                         (str "Schema" (gensym)))))
       (generate-string {:pretty true})))
