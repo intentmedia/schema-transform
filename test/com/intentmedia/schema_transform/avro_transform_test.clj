@@ -45,6 +45,20 @@
                                     :fields    [{:name "name" :type "string"}
                                                 {:name "favorite_number" :type ["null" "int"]}]})))))
 
+(deftest test-avro-union-transformer
+  (testing "Converts a union"
+    (is (= (s/cond-pre
+             {:one String}
+             {:another String})
+          (avro-union-transformer [{:name "rec1"
+                                    :namespace "example.avro"
+                                    :type "record"
+                                    :fields [{:name "one" :type "string"}]}
+                                   {:name "rec2"
+                                    :namespace "example.avro"
+                                    :type "record"
+                                    :fields [{:name "another" :type "string"}]}])))))
+
 ;; Integration Tests
 (defn- read-schema [filename]
   (slurp (io/file (io/resource filename))))
