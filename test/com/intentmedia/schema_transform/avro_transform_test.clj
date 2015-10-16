@@ -8,16 +8,24 @@
 ;; Unit tests
 (deftest test-avro-primitive-transformer
   (testing "Converts a single field"
-    (is (= String (avro-primitive-transformer "string")))
-    (is (= Integer (avro-primitive-transformer "int")))
-    (is (= Double (avro-primitive-transformer "double")))
-    (is (= Float (avro-primitive-transformer "float")))
-    (is (= Long (avro-primitive-transformer "long")))
-    (is (= Boolean (avro-primitive-transformer "boolean")))
-    (is (= String (avro-primitive-transformer "bytes"))))
+    (is (= String (avro-primitive->prismatic-primitive "string")))
+    (is (= Integer (avro-primitive->prismatic-primitive "int")))
+    (is (= Double (avro-primitive->prismatic-primitive "double")))
+    (is (= Float (avro-primitive->prismatic-primitive "float")))
+    (is (= Long (avro-primitive->prismatic-primitive "long")))
+    (is (= Boolean (avro-primitive->prismatic-primitive "boolean")))
+    (is (= String (avro-primitive->prismatic-primitive "bytes")))))
+
+(deftest test-avro-nullable-transformer
   (testing "Converts a union (nullable) field in either order"
-    (is (= (s/maybe Integer) (avro-primitive-transformer ["int" "null"])))
-    (is (= (s/maybe Integer) (avro-primitive-transformer ["null" "int"])))))
+    (is (= (s/maybe Integer) (avro-nullable-transformer ["int" "null"])))
+    (is (= (s/maybe Integer) (avro-nullable-transformer ["null" "int"]))))
+  (testing "Converts a union with multiple fields correctly"
+    (is (= (s/maybe (s/cond-pre Integer String))
+          (avro-nullable-transformer ["null" "int" "string"])))
+    (is (= (s/maybe [String])
+          (avro-nullable-transformer ["null" {:type "array"
+                                              :items "string"}])))))
 
 (deftest test-avro-array-transformer
   (testing "Converts an array"

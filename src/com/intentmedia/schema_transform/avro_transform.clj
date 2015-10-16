@@ -30,18 +30,10 @@
 (defn is-nullable? [avro]
   (some #(= "null" %) avro))
 
-(defn avro-union->type-str [union]
-  (first (remove #(= "null" %) union)))
-
-(defn- avro-nullable->prismatic-nullable [union-field]
-  (let [primitive (avro-union->type-str union-field)]
-    (if (is-nullable? union-field)
-      (s/maybe (avro-primitive->prismatic-primitive primitive)))))
-
-(defn avro-primitive-transformer [union-or-primitive]
-  (if (is-nullable? union-or-primitive)
-    (avro-nullable->prismatic-nullable union-or-primitive)
-    (avro-primitive->prismatic-primitive union-or-primitive)))
+(defn avro-nullable-transformer [nullable-type]
+  (let [type (remove #(= "null" %) nullable-type)]
+    (s/maybe (avro-type-transformer
+               (if (= 1 (count type)) (first type) (into [] type))))))
 
 (defn avro-record-transformer [avro-record-type]
   (let [fields (get avro-record-type :fields)]
@@ -81,10 +73,10 @@
 (defn avro-type-transformer [avro-type]
   (cond
     (contains? avro-primitive->prismatic-primitive avro-type)
-    (avro-primitive-transformer avro-type)
+    (avro-primitive->prismatic-primitive avro-type)
 
     (is-nullable? avro-type)
-    (avro-primitive-transformer avro-type)
+    (avro-nullable-transformer avro-type)
 
     (is-union? avro-type)
     (avro-union-transformer avro-type)
