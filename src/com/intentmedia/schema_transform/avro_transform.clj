@@ -86,8 +86,10 @@
 
 (defn avro-pair->prismatic-pair [avro-pair-map]
   (let [name (get avro-pair-map :name)
-        value-type (get avro-pair-map :type)]
-    [(keyword name) (avro-type-transformer value-type)]))
+        value-type (get avro-pair-map :type)
+        optional (is-nullable? value-type)]
+    [((if optional s/optional-key identity) (keyword name))
+     (avro-type-transformer value-type)]))
 
 (defn avro-parsed->prismatic [avro]
   (avro-type-transformer avro))
