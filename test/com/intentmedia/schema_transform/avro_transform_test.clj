@@ -46,7 +46,7 @@
 (deftest test-avro-record-transformer
   (testing "Converts a record"
     (is (= {:name            String
-            :favorite_number (s/maybe Integer)}
+            (s/optional-key :favorite_number) (s/maybe Integer)}
           (avro-record-transformer {:name      "rec"
                                     :namespace "example.avro"
                                     :type      "record"
@@ -85,7 +85,7 @@
                              :total Float
                              :product_detail {:product_id Long
                                               :product_name String
-                                              :product_description (s/maybe String)
+                                              (s/optional-key :product_description) (s/maybe String)
                                               :product_status (s/enum "AVAILABLE" "OUT_OF_STOCK")
                                               :product_tags [String]
                                               :price Float
