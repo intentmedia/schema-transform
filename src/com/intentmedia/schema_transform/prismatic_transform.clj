@@ -1,7 +1,7 @@
 (ns com.intentmedia.schema-transform.prismatic-transform
   (:require [cheshire.core :refer [parse-string generate-string]]
             [schema.core :as s]
-            [camel-snake-kebab.core :refer [->PascalCase]])
+            [camel-snake-kebab.core :refer [->PascalCase ->snake_case]])
   (:import [schema.core EnumSchema Maybe Both]))
 
 (defrecord Optional [schema])
@@ -91,9 +91,11 @@
 
 (defn avro-field
   [field-name schema]
-  (let [field-name* (name (if (s/optional-key? field-name)
-                            (:k field-name)
-                            field-name))
+  (let [field-name* (-> (if (s/optional-key? field-name)
+                          (:k field-name)
+                          field-name)
+                        name
+                        ->snake_case)
         type (avro-type field-name* schema)]
     {:type type
      :name field-name*}))

@@ -7,11 +7,11 @@
 
 (s/defschema User
   {:name                    String
-   :favorite_number         (s/maybe Integer)
-   :favorite_color          (s/maybe String)
+   :favorite-number         (s/maybe Integer)
+   :favorite-color          (s/maybe String)
    :map                     {String Long}
    :both                    (s/both Integer (s/pred pos?))
-   (s/optional-key :nested) (s/schema-with-name {:nested_field Boolean}
+   (s/optional-key :nested) (s/schema-with-name {:nested-field Boolean}
                                                 "NestedRecord")})
 
 (deftest test-prismatic->avro
