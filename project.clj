@@ -14,6 +14,8 @@
   :resource-paths ["resources"]
   :test-paths ["test"]
   :deploy-branches ["master"]
+  :repositories [["releases" {:url   "https://clojars.org/repo"
+                              :creds :gpg}]]
   :release-tasks [["vcs" "assert-committed"]
                   ["change" "version" "leiningen.release/bump-version" "release"]
                   ["vcs" "commit"]
