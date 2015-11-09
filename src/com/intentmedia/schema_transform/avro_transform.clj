@@ -1,6 +1,6 @@
 (ns com.intentmedia.schema-transform.avro-transform
   (:require [cheshire.core :refer [parse-string]]
-    [schema.core :as s]))
+            [schema.core :as s]))
 
 ; Currently supports:
 ; - Primitives
@@ -27,21 +27,13 @@
    "fixed"   String
    "null"    nil})
 
-(defn is-union? [avro]
+(defn is-nullable? [avro]
   (some #(= "null" %) avro))
 
-(defn avro-union->type-str [union]
-  (first (remove #(= "null" %) union)))
-
-(defn- avro-nullable->prismatic-nullable [union-field]
-  (let [primitive (avro-union->type-str union-field)]
-    (if (is-union? union-field)
-      (s/maybe (avro-primitive->prismatic-primitive primitive)))))
-
-(defn avro-primitive-transformer [union-or-primitive]
-  (if (is-union? union-or-primitive)
-    (avro-nullable->prismatic-nullable union-or-primitive)
-    (avro-primitive->prismatic-primitive union-or-primitive)))
+(defn avro-nullable-transformer [nullable-type]
+  (let [type (remove #(= "null" %) nullable-type)]
+    (s/maybe (avro-type-transformer
+               (if (= 1 (count type)) (first type) (into [] type))))))
 
 (defn avro-record-transformer [avro-record-type]
   (let [fields (get avro-record-type :fields)]
@@ -64,6 +56,13 @@
 (defn avro-fixed-transformer [avro-fixed-type]
   String)
 
+(defn is-union? [avro-type]
+  (vector? avro-type))
+
+(defn avro-union-transformer [avro-type]
+  (apply s/cond-pre
+    (map avro-type-transformer avro-type)))
+
 (def avro-type->transformer
   {"record" avro-record-transformer
    "array"  avro-array-transformer
@@ -72,14 +71,25 @@
    "fixed"  avro-fixed-transformer})
 
 (defn avro-type-transformer [avro-type]
-  (if (or (contains? avro-primitive->prismatic-primitive avro-type) (is-union? avro-type))
-    (avro-primitive-transformer avro-type)
-    ((get avro-type->transformer (get avro-type :type)) avro-type)))
+  (cond
+    (contains? avro-primitive->prismatic-primitive avro-type)
+    (avro-primitive->prismatic-primitive avro-type)
+
+    (is-nullable? avro-type)
+    (avro-nullable-transformer avro-type)
+
+    (is-union? avro-type)
+    (avro-union-transformer avro-type)
+
+    :else
+    ((-> avro-type :type avro-type->transformer) avro-type)))
 
 (defn avro-pair->prismatic-pair [avro-pair-map]
   (let [name (get avro-pair-map :name)
-        value-type (get avro-pair-map :type)]
-    [(keyword name) (avro-type-transformer value-type)]))
+        value-type (get avro-pair-map :type)
+        optional (is-nullable? value-type)]
+    [((if optional s/optional-key identity) (keyword name))
+     (avro-type-transformer value-type)]))
 
 (defn avro-parsed->prismatic [avro]
   (avro-type-transformer avro))
