@@ -13,4 +13,12 @@
   :source-paths ["src"]
   :resource-paths ["resources"]
   :test-paths ["test"]
-  :deploy-branches ["master"])
+  :deploy-branches ["master"]
+  :release-tasks [["vcs" "assert-committed"]
+                  ["change" "version" "leiningen.release/bump-version" "release"]
+                  ["vcs" "commit"]
+                  ["vcs" "tag" "v"]
+                  ["deploy"]
+                  ["change" "version" "leiningen.release/bump-version"]
+                  ["vcs" "commit"]
+                  ["vcs" "push"]])
