@@ -1,4 +1,4 @@
-(defproject com.intentmedia/schema-transform "0.0.1-SNAPSHOT"
+(defproject com.intentmedia/schema-transform "0.0.1"
   :description "Schema Transform is library for changing data specifications from one format to another to help build complex polyglot data systems."
   :url "https://github.com/intentmedia/schema-transform"
   :license {:name "Eclipse Public License"
