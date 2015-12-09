@@ -1,22 +1,79 @@
 (ns com.intentmedia.schema-transform.prismatic-transform-test
   (:require [com.intentmedia.schema-transform.prismatic-transform :refer :all]
+            [cheshire.core :refer [generate-string]]
             [clojure.test :refer :all]
-            [schema.core :as s]))
+            [schema.core :as s])
+  (:import [org.apache.avro Schema$Parser Schema$UnionSchema]))
 
-(def avro-nullable "{\n  \"type\" : \"record\",\n  \"name\" : \"User\",\n  \"fields\" : [ {\n    \"type\" : \"string\",\n    \"name\" : \"name\"\n  }, {\n    \"type\" : [ \"null\", \"int\" ],\n    \"name\" : \"favorite_number\"\n  }, {\n    \"type\" : [ \"null\", \"string\" ],\n    \"name\" : \"favorite_color\"\n  }, {\n    \"type\" : {\n      \"type\" : \"map\",\n      \"values\" : \"long\"\n    },\n    \"name\" : \"map\"\n  }, {\n    \"type\" : \"int\",\n    \"name\" : \"both\"\n  }, {\n    \"type\" : {\n      \"type\" : \"record\",\n      \"name\" : \"NestedRecord\",\n      \"fields\" : [ {\n        \"type\" : \"boolean\",\n        \"name\" : \"nested_field\"\n      } ]\n    },\n    \"name\" : \"nested\"\n  } ],\n  \"namespace\" : \"com.intentmedia.schema-transform.prismatic-transform-test\"\n}")
+(def avro-nullable [{:type      "enum",
+                     :symbols   ["VAL2" "VAL1"],
+                     :name      "Enum",
+                     :namespace "com.intentmedia.schema-transform.prismatic-transform-test"}
+                    {:type      "record",
+                     :fields    [{:type "string", :name "field"}],
+                     :name      "Nested2",
+                     :namespace "com.intentmedia.schema-transform.prismatic-transform-test"}
+                    {:type      "record",
+                     :fields    [{:type "int", :name "thing"} {:type "Nested2", :name "nested_2"}],
+                     :name      "AnonRecordsItem",
+                     :namespace "com.intentmedia.schema-transform.prismatic-transform-test"}
+                    {:type      "record",
+                     :fields    [{:type "string", :name "field"}],
+                     :name      "Other",
+                     :namespace "com.intentmedia.schema-transform.prismatic-transform-test"}
+                    {:type      "record",
+                     :fields    [{:type "int", :name "thing"}],
+                     :name      "AnonRecord",
+                     :namespace "com.intentmedia.schema-transform.prismatic-transform-test"}
+                    {:type      "record",
+                     :fields    [{:type "string", :name "field"}],
+                     :name      "OptionalRecord",
+                     :namespace "com.intentmedia.schema-transform.prismatic-transform-test"}
+                    {:type      "record",
+                     :fields    [{:type "boolean", :name "nested_field"}],
+                     :name      "NestedRecord",
+                     :namespace "com.intentmedia.schema-transform.prismatic-transform-test"}
+                    {:type      "record",
+                     :fields    [{:type "Enum", :name "enum"}
+                                 {:type "string", :name "name"}
+                                 {:type {:type "array", :items "string"}, :name "string_array"}
+                                 {:type {:type "array", :items "AnonRecordsItem"}, :name "anon_records"}
+                                 {:type {:type "array", :items "Other"}, :name "list"}
+                                 {:type ["null" "string"], :name "favorite_color"}
+                                 {:type "AnonRecord", :name "anon_record"}
+                                 {:type ["null" "OptionalRecord"], :name "optional_record"}
+                                 {:type "int", :name "both"}
+                                 {:type ["null" "int"], :name "favorite_number"}
+                                 {:type {:type "map", :values "long"}, :name "map"}
+                                 {:type "NestedRecord", :name "nested"}],
+                     :name      "User",
+                     :namespace "com.intentmedia.schema-transform.prismatic-transform-test"}])
+
+(s/defschema Other {:field String})
 
 (s/defschema User
   {:name                    String
    :favorite-number         (s/maybe Integer)
    :favorite-color          (s/maybe String)
    :map                     {String Long}
+   :list                    [Other]
+   :string-array            [String]
    :both                    (s/both Integer (s/pred pos?))
+   :anon-record             {:thing Integer}
+   :enum                    (s/enum "VAL1" "VAL2")
+   :optional-record         (s/maybe {:field String})
+   :anon-records            [{:thing Integer :nested-2 {:field String}}]
    (s/optional-key :nested) (s/schema-with-name {:nested-field Boolean}
                                                 "NestedRecord")})
 
 (deftest test-prismatic->avro
   (testing "It correctly parses a prismatic schema into an avro schema"
     (is (= avro-nullable (to-avro User)))))
+
+(deftest parse-test
+  (is (instance? Schema$UnionSchema
+                 (.parse (Schema$Parser.)
+                         (generate-string (to-avro User))))))
 
 (deftest test-prismatic-primitive-transformer
   (testing "Converts a single field"
@@ -26,35 +83,3 @@
     (is (= "long" (primitive-type Long)))
     (is (= "boolean" (primitive-type Boolean)))
     (is (= "float" (primitive-type Float)))))
-
-(deftest test-prismatic-enum-transforTnmer
-  (testing "Converts an enum"
-    (is (= {:type    "enum"
-            :symbols ["DIAMONDS" "SPADES" "HEARTS" "CLUBS"]}
-           (select-keys
-             (enum-type :any (s/enum "SPADES" "CLUBS" "DIAMONDS" "HEARTS"))
-             [:type :symbols])))))
-
-(deftest test-prismatic-record-transformer
-  (testing "Converts a record"
-    (is (= {:type   "record"
-            :fields [{:name "name" :type "string"}
-                     {:name "favorite_number" :type ["null" "int"]}]}
-           (select-keys
-             (record-type
-               "Record"
-               {:name            String
-                :favorite_number (s/maybe Integer)})
-             [:type :fields])))))
-
-(deftest test-prismatic-array-transformer
-  (testing "Converts an array"
-    (is (= {:type  "array"
-            :items "string"}
-           (array-type :any [String])))))
-
-(deftest test-prismatic-map-transformer
-  (testing "Converts a map"
-    (is (= {:type   "map"
-            :values "double"}
-           (map-type {Integer Double})))))

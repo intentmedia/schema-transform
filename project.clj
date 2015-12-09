@@ -1,4 +1,4 @@
-(defproject com.intentmedia/schema-transform "0.0.1"
+(defproject com.intentmedia/schema-transform "0.1.0-SNAPSHOT"
   :description "Schema Transform is library for changing data specifications from one format to another to help build complex polyglot data systems."
   :url "https://github.com/intentmedia/schema-transform"
   :license {:name "Eclipse Public License"
@@ -8,7 +8,8 @@
   :dependencies [[cheshire "5.5.0"]
                  [prismatic/schema "1.0.1"]
                  [org.clojure/clojure "1.7.0"]
-                 [camel-snake-kebab "0.3.2"]]
+                 [camel-snake-kebab "0.3.2"]
+                 [org.apache.avro/avro "1.7.7"]]
   :profiles {:uberjar {:aot :all}}
   :source-paths ["src"]
   :resource-paths ["resources"]

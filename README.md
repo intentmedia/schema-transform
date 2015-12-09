@@ -19,16 +19,12 @@ Transform data schemas
    :favorite_color  (s/maybe String)})
    
 (to-avro User)
-=> "{
-      \"name\": \"User\",
-      \"type\": \"record\",
-      \"fields\": [
-        {\"name\": \"name\", \"type\": \"string\"},
-        {\"name\": \"favorite_number\", \"type\": [\"null\",\"int\"]},
-        {\"name\": \"favorite_color\", \"type\": [\"null\",\"string\"]}
-      ],
-      \"namespace\": \"example.avro\"
-    }"
+=> [{:type "record",
+     :fields [{:type "string", :name "name"}
+              {:type ["null" "int"], :name "favorite_number"}
+              {:type ["null" "string"], :name "favorite_color"}],
+     :name "User",
+     :namespace "example.avro"}]
 ```
 
 ###Avro -> Schema

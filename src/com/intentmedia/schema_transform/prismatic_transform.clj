@@ -1,10 +1,9 @@
 (ns com.intentmedia.schema-transform.prismatic-transform
-  (:require [cheshire.core :refer [parse-string generate-string]]
-            [schema.core :as s]
+  (:require [schema.core :as s]
             [camel-snake-kebab.core :refer [->PascalCase ->snake_case]])
   (:import [schema.core EnumSchema Maybe Both]))
 
-(defrecord Optional [schema])
+(declare avro-type to-avro)
 
 (def primitives
   {Boolean "boolean"
@@ -15,8 +14,6 @@
    Number  "double"
    String  "string"})
 
-(declare avro-field avro-type nested-type)
-
 (defn primitive-type [schema]
   (primitives schema))
 
@@ -26,31 +23,72 @@
 
 (def null-type "null")
 
-(defn both-type [field-name schema]
-  (avro-type field-name (first (:schemas schema))))
+(defn build-meta [field-name schema namespace]
+  {:name      (->PascalCase
+                (str (or (s/schema-name schema)
+                         (name field-name))))
+   :namespace (str (or (s/schema-ns schema) namespace))})
 
-(defn record-type [field-name schema]
-  (let [fields (mapv avro-field (keys schema) (vals schema))]
-    {:type   "record"
-     :name   (->PascalCase
-               (or (s/schema-name schema)
-                   field-name))
-     :fields fields}))
+(defn both-type [field-name schema namespace schemas]
+  (avro-type schemas
+             (first (:schemas schema))
+             (build-meta field-name schema namespace)))
 
-(defn optional-type [field-name schema]
-  ["null" (avro-type field-name (:schema schema))])
+(defn avro-field
+  [schemas schema [namespace field-name]]
+  (let [field-name* (-> (if (s/optional-key? field-name)
+                          (:k field-name)
+                          field-name)
+                        name
+                        ->snake_case)
+        type (avro-type schemas
+                        schema
+                        (build-meta field-name*
+                                    schema
+                                    namespace))]
+    {:type type
+     :name field-name*}))
 
-(defn enum-type [field-name schema]
-  {:type      "enum"
-   :symbols   (vec (:vs schema))
-   :name      (->PascalCase
-                (or (s/schema-name schema)
-                    field-name))
-   :namespace (s/schema-ns schema)})
+(defn add-to-schemas [schemas avro-schema]
+  (swap! schemas assoc (str (:namespace avro-schema) "." (:name avro-schema))
+         avro-schema))
 
-(defn array-type [field-name schema]
+(defn record-type [field-name schema namespace schemas]
+  (let [fields (mapv (partial avro-field schemas)
+                     (vals schema)
+                     (map (partial vector namespace)
+                          (keys schema)))
+        avro-schema (-> {:type   "record"
+                         :fields fields}
+                        (merge (build-meta field-name
+                                           schema
+                                           namespace)))]
+    (add-to-schemas schemas avro-schema)
+    (:name avro-schema)))
+
+
+(defn enum-type [field-name schema namespace schemas]
+  (let [avro-schema (-> {:type    "enum"
+                         :symbols (vec (:vs schema))}
+                        (merge (build-meta field-name
+                                           schema
+                                           namespace)))]
+    (add-to-schemas schemas avro-schema)
+    (:name avro-schema)))
+
+(defn optional-type [field-name schema namespace schemas]
+  ["null" (avro-type schemas
+                     (:schema schema)
+                     (build-meta field-name schema namespace))])
+
+(defn array-type [field-name schema namespace schemas]
   {:type  "array"
-   :items (avro-type field-name (first schema))})
+   :items (avro-type schemas
+                     (first schema)
+                     (build-meta (str (name field-name)
+                                      "Item")
+                                 schema
+                                 namespace))})
 
 (defn primitive? [schema]
   (contains? primitives schema))
@@ -74,40 +112,27 @@
       (= (type schema) Maybe)))
 
 (defn avro-type
-  [field-name schema]
+  [schemas schema & [{:keys [name namespace]}]]
   (cond
-    (optional? field-name schema) (optional-type field-name schema)
+    (optional? name schema) (optional-type name schema namespace schemas)
     (primitive? schema) (primitive-type schema)
     (nil? schema) null-type
-    (sequential? schema) (array-type field-name schema)
+    (sequential? schema) (array-type name schema namespace schemas)
     (map?* schema) (map-type schema)
-    (both? schema) (both-type field-name schema)
-    (enum? schema) (enum-type field-name schema)
-    (record?* schema) (record-type field-name schema)
+    (both? schema) (both-type name schema namespace schemas)
+    (enum? schema) (enum-type name schema namespace schemas)
+    (record?* schema) (record-type name schema namespace schemas)
     :else (throw (RuntimeException. (str "Could not tranform field "
-                                         field-name
+                                         name
                                          " with schema "
                                          schema)))))
 
-(defn avro-field
-  [field-name schema]
-  (let [field-name* (-> (if (s/optional-key? field-name)
-                          (:k field-name)
-                          field-name)
-                        name
-                        ->snake_case)
-        type (avro-type field-name* schema)]
-    {:type type
-     :name field-name*}))
-
 (defn to-avro
   [prismatic-schema & {:keys [name namespace]}]
-  (-> (avro-type "" prismatic-schema)
-      (assoc :namespace (or namespace (-> (meta prismatic-schema)
-                                          :ns
-                                          str))
-             :name (->PascalCase
-                     (or name
-                         (s/schema-name prismatic-schema)
-                         (str "Schema" (gensym)))))
-      (generate-string {:pretty true})))
+  (let [schemas (atom {})]
+    (avro-type schemas
+               prismatic-schema
+               (build-meta name
+                           prismatic-schema
+                           namespace))
+    (-> @schemas vals vec)))
