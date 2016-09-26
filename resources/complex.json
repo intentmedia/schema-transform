@@ -1,0 +1,51 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "name": "Order",
+    "required": ["order_id", "customer_id", "total", "order_details"],
+    "additionalProperties": false,
+    "properties": {
+        "order_id": { "type": "integer" },
+        "customer_id": { "type": "integer" },
+        "total": { "type": "number" },
+        "order_details": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["quantity", "total", "product_detail"],
+                "additionalProperties": false,
+                "properties": {
+                    "quantity": { "type": "integer" },
+                    "total": { "type": "number" },
+                    "product_detail": {
+                        "type": "object",
+                        "required": ["product_id", "product_name", "product_status", "product_tags", "price", "product_properties"],
+                        "additionalProperties": false,
+                        "properties": {
+                            "product_id": { "type": "integer" },
+                            "product_name": { "type": "string" },
+                            "product_description": {
+                                "type": ["null", "string"],
+                                "default": ""
+                            },
+                            "product_status": {
+                                "type": "string",
+                                "enum": ["AVAILABLE", "OUT_OF_STOCK"],
+                                "default": "AVAILABLE"
+                            },
+                            "product_tags": {
+                                "type": "array",
+                                "items": { "type": "string" }
+                            },
+                            "price": { "type": "number" },
+                            "product_properties": {
+                                "type": "object",
+                                "additionalProperties": { "type": "string" }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
